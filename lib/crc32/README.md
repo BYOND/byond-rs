@@ -1,4 +1,7 @@
 # byond-crc32
+[![byond-crc32](https://img.shields.io/crates/v/byond-crc32.svg)](https://crates.io/crates/byond-crc32)
+[![Documentation](https://docs.rs/byond-crc32/badge.svg)](https://docs.rs/byond-crc32)
+[![License: MIT or Apache-2.0](https://img.shields.io/crates/l/byond-crc32)](README.md#License)
 
 _Fast CRC-32/BYOND checksum computation_
 
