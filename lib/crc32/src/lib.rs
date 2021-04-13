@@ -1,3 +1,13 @@
+//! ## Example
+//!
+//! ```rust
+//! use byond_crc32::Crc32;
+//!
+//! let mut crc32 = Crc32::new();
+//! crc32.update(b"123456789");
+//! let checksum = crc32.as_u32();
+//! ```
+
 #![cfg_attr(not(any(feature = "std", test)), no_std)]
 
 mod combine;
@@ -17,34 +27,49 @@ use combine::combine;
 const DEFAULT_CRC32: u32 = 0xffffffff;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// Represents an in-progress CRC-32/BYOND computation.
 pub struct Crc32 {
     len: u64,
     state: u32,
 }
 
 impl Crc32 {
+    /// Creates a new CRC-32/BYOND computation hasher.
     pub fn new() -> Self {
-        Self::from(DEFAULT_CRC32)
+        Self::new_with_initial(DEFAULT_CRC32, 0)
     }
 
+    /// Creates a new CRC-32/BYOND computation hasher with the
+    /// given initial checksum.
+    ///
+    /// The `len` parameter represents the amount of bytes consumed to
+    /// create the existing checksum, and is used when combining checksums.
+    pub fn new_with_initial(crc: u32, len: u64) -> Self {
+        Self { len, state: crc }
+    }
+
+    /// Gets the underlying checksum value.
     pub fn as_u32(&self) -> u32 {
         self.state
     }
 
+    /// Resets the CRC-32/BYOND computation hasher to its initial state.
     pub fn reset(&mut self) {
         self.len = 0;
         self.state = DEFAULT_CRC32;
     }
 
+    /// Updates the CRC-32/BYOND computation with the given `bytes`.
     pub fn update(&mut self, bytes: &[u8]) {
         self.state = update_fast(self.state, bytes);
         self.len += bytes.len() as u64;
     }
 
-    pub fn combine(&self, other: &Self) -> Self {
+    /// Combines two CRC-32/BYOND checksums.
+    pub fn combine(a: &Self, b: &Self) -> Self {
         Self {
-            len: self.len + other.len,
-            state: combine(self.state, other.state, other.len),
+            len: a.len + b.len,
+            state: combine(a.state, b.state, b.len),
         }
     }
 }
@@ -52,12 +77,6 @@ impl Crc32 {
 impl Default for Crc32 {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl From<u32> for Crc32 {
-    fn from(state: u32) -> Self {
-        Self { len: 0, state }
     }
 }
 
@@ -131,7 +150,7 @@ mod tests {
         let mut crc_b = super::Crc32::new();
         crc_a.update(b"12345");
         crc_b.update(b"6789");
-        assert_eq!(CHECK, crc_a.combine(&crc_b));
+        assert_eq!(CHECK, super::Crc32::combine(&crc_a, &crc_b));
     }
 
     fn golden(crc: u32, bytes: &[u8]) -> u32 {
