@@ -1,5 +1,8 @@
 #![cfg_attr(not(any(feature = "std", test)), no_std)]
 
+mod combine;
+mod tables;
+
 #[cfg(not(feature = "std"))]
 use core::convert::TryInto;
 #[cfg(not(feature = "std"))]
@@ -9,12 +12,13 @@ use std::convert::TryInto;
 #[cfg(feature = "std")]
 use std::hash::Hasher;
 
-mod tables;
+use combine::combine;
 
 const DEFAULT_CRC32: u32 = 0xffffffff;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Crc32 {
+    len: u64,
     state: u32,
 }
 
@@ -28,11 +32,20 @@ impl Crc32 {
     }
 
     pub fn reset(&mut self) {
+        self.len = 0;
         self.state = DEFAULT_CRC32;
     }
 
     pub fn update(&mut self, bytes: &[u8]) {
         self.state = update_fast(self.state, bytes);
+        self.len += bytes.len() as u64;
+    }
+
+    pub fn combine(&self, other: &Self) -> Self {
+        Self {
+            len: self.len + other.len,
+            state: combine(self.state, other.state, other.len),
+        }
     }
 }
 
@@ -44,7 +57,7 @@ impl Default for Crc32 {
 
 impl From<u32> for Crc32 {
     fn from(state: u32) -> Self {
-        Self { state }
+        Self { len: 0, state }
     }
 }
 
@@ -103,11 +116,22 @@ pub(crate) fn update_slow(crc: u32, bytes: &[u8]) -> u32 {
 mod tests {
     use quickcheck::quickcheck;
 
+    const CHECK: u32 = 0xa5fd3138;
+
     #[test]
     fn check() {
         let mut crc = super::Crc32::new();
         crc.update(b"123456789");
-        assert_eq!(0xa5fd3138u32, crc);
+        assert_eq!(CHECK, crc);
+    }
+
+    #[test]
+    fn check_combine() {
+        let mut crc_a = super::Crc32::new();
+        let mut crc_b = super::Crc32::new();
+        crc_a.update(b"12345");
+        crc_b.update(b"6789");
+        assert_eq!(CHECK, crc_a.combine(&crc_b));
     }
 
     fn golden(crc: u32, bytes: &[u8]) -> u32 {
@@ -126,7 +150,7 @@ mod tests {
 
     #[test]
     fn golden_is_valid() {
-        assert_eq!(0xa5fd3138, golden(crate::DEFAULT_CRC32, b"123456789"));
+        assert_eq!(CHECK, golden(crate::DEFAULT_CRC32, b"123456789"));
     }
 
     quickcheck! {
