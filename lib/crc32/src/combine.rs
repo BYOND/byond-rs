@@ -8,7 +8,7 @@ const COMBINE_TABLE: [u32; 32] = [
 #[inline(always)]
 pub(crate) fn combine(mut crc1: u32, crc2: u32, len2: u64) -> u32 {
     crc1 ^= 0xffffffff;
-    return multmodp(x8nmodp(len2), crc1) ^ crc2;
+    multmodp(x8nmodp(len2), crc1) ^ crc2
 }
 
 #[inline(always)]
