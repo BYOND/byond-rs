@@ -102,7 +102,6 @@ impl PartialEq<Crc32> for u32 {
     }
 }
 
-// TODO: Big-endian implementation.
 #[inline(always)]
 pub(crate) fn update_fast(mut crc: u32, bytes: &[u8]) -> u32 {
     use tables::WORD_TABLE;
