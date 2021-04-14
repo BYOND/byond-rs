@@ -53,6 +53,11 @@ impl Crc32 {
         self.state
     }
 
+    /// The length of data consumed to create the current checksum value.
+    pub fn len(&self) -> u64 {
+        self.len
+    }
+
     /// Resets the CRC-32/BYOND computation hasher to its initial state.
     pub fn reset(&mut self) {
         self.len = 0;
