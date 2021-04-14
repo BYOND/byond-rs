@@ -14,13 +14,9 @@ mod combine;
 mod tables;
 
 #[cfg(not(feature = "std"))]
-use core::convert::TryInto;
-#[cfg(not(feature = "std"))]
-use core::hash::Hasher;
+use core::{convert::TryInto, hash::Hasher};
 #[cfg(feature = "std")]
-use std::convert::TryInto;
-#[cfg(feature = "std")]
-use std::hash::Hasher;
+use std::{convert::TryInto, hash::Hasher};
 
 use combine::combine;
 
